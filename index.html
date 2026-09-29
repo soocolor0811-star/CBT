@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동물 분류 CBT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .select-section {
+            margin-bottom: 40px;
+        }
+
+        .select-section label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .select-section select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .select-section select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .selected-animal {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 30px;
+            min-height: 32px;
+        }
+
+        .questions-section {
+            display: none;
+        }
+
+        .questions-section.show {
+            display: block;
+        }
+
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+        }
+
+        .option input[type="radio"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .option label {
+            cursor: pointer;
+            flex: 1;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .option input[type="radio"]:checked + label {
+            background-color: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .submit-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .result-details {
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .result-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #ddd;
+        }
+
+        .result-item.correct {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .result-item.incorrect {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .result-item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .result-item-text {
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦁 동물 분류 CBT</h1>
+
+        <div class="select-section">
+            <label for="animal-select">동물을 선택하세요:</label>
+            <select id="animal-select">
+                <option value="">-- 동물을 선택해주세요 --</option>
+            </select>
+        </div>
+
+        <div class="selected-animal" id="selected-animal"></div>
+
+        <div class="questions-section" id="questions-section">
+            <div class="question">
+                <div class="question-title">① 문(phylum)은 무엇인가요?</div>
+                <div class="options" id="phylum-options"></div>
+            </div>
+
+            <div class="question">
+                <div class="question-title">② 강(class)은 무엇인가요?</div>
+                <div class="options" id="class-options"></div>
+            </div>
+
+            <div class="question">
+                <div class="question-title">③ 목(order)은 무엇인가요?</div>
+                <div class="options" id="order-options"></div>
+            </div>
+
+            <div class="question">
+                <div class="question-title">④ 과(family)는 무엇인가요?</div>
+                <div class="options" id="family-options"></div>
+            </div>
+
+            <div class="button-group">
+                <button class="submit-btn" id="submit-btn" disabled>4문제 한 번에 제출</button>
+                <button class="reset-btn" id="reset-btn">다시 풀기</button>
+            </div>
+        </div>
+
+        <div class="result-section" id="result-section">
+            <div class="score" id="score-display"></div>
+            <div id="result-details" class="result-details"></div>
+            <div class="button-group" style="margin-top: 30px;">
+                <button class="reset-btn" id="back-to-select">다른 동물 선택</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">데이터를 불러오는 중...</div>
+    </div>
+
+    <script>
+        let species = [];
+        let currentAnimal = null;
+        let answers = {
+            phylum: null,
+            class: null,
+            order: null,
+            family: null
+        };
+
+        // 데이터 로드
+        async function loadSpecies() {
+            try {
+                const response = await fetch('./species.json');
+                species = await response.json();
+                initializeApp();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                document.getElementById('loading').textContent = '데이터 로드에 실패했습니다.';
+            }
+        }
+
+        function initializeApp() {
+            const select = document.getElementById('animal-select');
+            species.forEach((animal, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = animal.name;
+                select.appendChild(option);
+            });
+
+            document.getElementById('animal-select').addEventListener('change', onAnimalSelect);
+            document.getElementById('submit-btn').addEventListener('click', onSubmit);
+            document.getElementById('reset-btn').addEventListener('click', onReset);
+            document.getElementById('back-to-select').addEventListener('click', onBackToSelect);
+        }
+
+        function onAnimalSelect(e) {
+            const index = e.target.value;
+            if (index === '') {
+                document.getElementById('questions-section').classList.remove('show');
+                document.getElementById('result-section').classList.remove('show');
+                document.getElementById('selected-animal').textContent = '';
+                return;
+            }
+
+            currentAnimal = species[index];
+            document.getElementById('selected-animal').textContent = currentAnimal.name;
+            resetAnswers();
+            generateQuestions();
+            document.getElementById('questions-section').classList.add('show');
+            document.getElementById('result-section').classList.remove('show');
+        }
+
+        function resetAnswers() {
+            answers = {
+                phylum: null,
+                class: null,
+                order: null,
+                family: null
+            };
+        }
+
+        function generateQuestions() {
+            generateQuestion('phylum', '문', currentAnimal.phylum);
+            generateQuestion('class', '강', currentAnimal.class);
+            generateQuestion('order', '목', currentAnimal.order);
+            generateQuestion('family', '과', currentAnimal.family);
+        }
+
+        function generateQuestion(category, categoryName, correctAnswer) {
+            // 같은 카테고리의 모든 값 수집
+            const allAnswers = new Set();
+            species.forEach(s => {
+                allAnswers.add(s[category]);
+            });
+
+            // 정답을 포함하되, 나머지 3개는 랜덤 선택
+            let options = [correctAnswer];
+            const otherAnswers = Array.from(allAnswers).filter(a => a !== correctAnswer);
+            
+            // 랜덤으로 3개 선택
+            for (let i = 0; i < 3 && otherAnswers.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * otherAnswers.length);
+                options.push(otherAnswers[randomIndex]);
+                otherAnswers.splice(randomIndex, 1);
+            }
+
+            // 섞기
+            options = options.sort(() => Math.random() - 0.5);
+
+            // DOM에 추가
+            const container = document.getElementById(`${category}-options`);
+            container.innerHTML = '';
+            options.forEach((option, idx) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = `${category}-${idx}`;
+                input.name = category;
+                input.value = option;
+                input.addEventListener('change', () => {
+                    answers[category] = option;
+                    updateSubmitButton();
+                });
+
+                const label = document.createElement('label');
+                label.htmlFor = `${category}-${idx}`;
+                label.textContent = option;
+
+                div.appendChild(input);
+                div.appendChild(label);
+                container.appendChild(div);
+            });
+        }
+
+        function updateSubmitButton() {
+            const allAnswered = answers.phylum && answers.class && answers.order && answers.family;
+            document.getElementById('submit-btn').disabled = !allAnswered;
+        }
+
+        function onSubmit() {
+            // 정답 확인
+            let correct = 0;
+            const results = [];
+
+            const categories = [
+                { key: 'phylum', label: '문', correct: currentAnimal.phylum },
+                { key: 'class', label: '강', correct: currentAnimal.class },
+                { key: 'order', label: '목', correct: currentAnimal.order },
+                { key: 'family', label: '과', correct: currentAnimal.family }
+            ];
+
+            categories.forEach(cat => {
+                const isCorrect = answers[cat.key] === cat.correct;
+                if (isCorrect) correct++;
+                results.push({
+                    label: cat.label,
+                    correct: cat.correct,
+                    selected: answers[cat.key],
+                    isCorrect: isCorrect
+                });
+            });
+
+            // 결과 표시
+            displayResult(correct, results);
+        }
+
+        function displayResult(correct, results) {
+            document.getElementById('score-display').textContent = `점수: ${correct} / 4`;
+
+            let detailsHTML = '';
+            results.forEach(result => {
+                const className = result.isCorrect ? 'correct' : 'incorrect';
+                const statusText = result.isCorrect ? '✓ 정답' : '✗ 오답';
+                
+                detailsHTML += `
+                    <div class="result-item ${className}">
+                        <div class="result-item-title">${result.label} ${statusText}</div>
+                        <div class="result-item-text">
+                            정답: <strong>${result.correct}</strong><br>
+                            ${!result.isCorrect ? `선택: ${result.selected}` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('result-details').innerHTML = detailsHTML;
+            document.getElementById('questions-section').classList.remove('show');
+            document.getElementById('result-section').classList.add('show');
+        }
+
+        function onReset() {
+            resetAnswers();
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.checked = false;
+            });
+            updateSubmitButton();
+            document.getElementById('result-section').classList.remove('show');
+        }
+
+        function onBackToSelect() {
+            document.getElementById('animal-select').value = '';
+            document.getElementById('selected-animal').textContent = '';
+            document.getElementById('questions-section').classList.remove('show');
+            document.getElementById('result-section').classList.remove('show');
+            resetAnswers();
+        }
+
+        // 앱 시작
+        loadSpecies();
+    </script>
+</body>
+</html>
